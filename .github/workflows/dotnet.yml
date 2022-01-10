@@ -15,15 +15,35 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    steps:
-    - uses: actions/checkout@v2
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 5.0.x
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --no-restore
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
+    steps:    
+      - name: Get the latest source code commit
+        uses: actions/checkout@v2
+    
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 5.0.x
+          
+      - name: Restore dependencies
+        run: dotnet restore
+        working-directory: .
+      
+      - name: Build
+        run: dotnet build --no-restore
+        working-directory: .
+        
+      - name: Test
+        run: dotnet test --no-build --verbosity normal
+        working-directory: .
+        
+      - name: Build Function App for Release
+        run: dotnet build --configuration Release --output ./output
+        working-directory: .
+        
+      - name: 'Run Azure Functions Action'
+        uses: Azure/functions-action@v1
+        id: fa
+        with:
+          app-name: azurefuncappdemo
+          package: './output'
+          publish-profile: ${{ secrets.AZURE_FUNCTION_PUBLISH_CREDS }}  
